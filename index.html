@@ -793,32 +793,68 @@ function resultText(){
   ].join('\n');
 }
 
+// wa.me / api.whatsapp.com kadang merusak karakter astral-plane (emoji 4-byte seperti 📌🔴🟡🟢🩺)
+// jadi tampil sebagai "�" di pesan WhatsApp yang diterima. Buang karakter di luar BMP
+// khusus untuk teks yang dikirim lewat link WA — clipboard copy lain tidak terpengaruh jadi aman pakai emoji.
+function stripAstral(str){
+  return String(str).replace(/[\u{10000}-\u{10FFFF}]/gu, '').replace(/[ \t]{2,}/g, ' ').trim();
+}
+
 function caregiverText(){
+  const statusPlain = stripAstral(state.result.statusLabel);
   return [
-    '📌 KARTU PENGASUH — BOLEH NGGAK, BUN?',
+    '*KARTU PENGASUH — BOLEH NGGAK, BUN?*',
     `Untuk bayi usia ${state.formData.usia} bulan`,
     `Bahan yang dicek: ${state.formData.bahan}`,
-    `Status: ${state.result.statusLabel}`,
+    `*Status: ${statusPlain}*`,
     `Cara olah/tekstur: ${state.formData.cara}; ${state.result.tekstur}`,
     `Yang perlu dilakukan: ${state.result.langkah.join(' ')}`,
-    'Jika muncul gangguan napas, bengkak pada bibir/wajah, pucat/kebiruan, pingsan, atau sangat lemas: cari pertolongan gawat darurat.'
-  ].join('\n');
+    '',
+    '*Tanda bahaya — cari pertolongan gawat darurat kalau muncul:* gangguan napas, bengkak pada bibir/wajah, pucat/kebiruan, pingsan, atau sangat lemas.',
+    '',
+    '_Dikirim dari aplikasi Boleh Nggak, Bun? — orientasi awal, bukan pengganti pemeriksaan tenaga kesehatan._'
+  ].map(stripAstral).join('\n');
 }
 
 function consultationText(){
   const fd = state.formData;
-  return [
+  const r = state.result;
+  const isIncident = fd.mode === 'B';
+  const redFlagLabel = {yes:'Ya, ada', unsure:'Tidak yakin', no:'Tidak ada'}[fd.redFlag] || '-';
+
+  const lines = [
     'RINGKASAN UNTUK KONSULTASI',
     `Usia bayi: ${fd.usia} bulan`,
     `Bahan dan cara olah: ${fd.bahan} — ${fd.cara}`,
-    `Pernah diberikan: ${fd.pernah}`,
-    `Riwayat keluarga: ${fd.riwayatKeluarga || '-'}`,
-    `Jumlah/waktu: ${fd.jumlahWaktu || '-'}`,
-    `Gejala: ${fd.gejala || '-'}`,
-    `Tanda bahaya dipilih: ${fd.redFlag || '-'}`,
-    `Hasil orientasi aplikasi: ${state.result.statusLabel}`,
-    'Pertanyaan untuk tenaga kesehatan: apakah bahan ini aman diberikan ulang, dalam bentuk apa, dan tanda apa yang perlu dipantau?'
-  ].join('\n');
+    `Situasi: ${isIncident ? 'Sudah diberikan ke bayi' : 'Belum diberikan, cek sebelum diberikan'}`,
+    `Pernah diberikan sebelumnya: ${fd.pernah || '-'}`,
+    `Riwayat alergi keluarga inti: ${fd.riwayatKeluarga || '-'}`,
+  ];
+
+  if (isIncident) {
+    lines.push(
+      `Jumlah & waktu pemberian: ${fd.jumlahWaktu || '-'}`,
+      `Gejala yang muncul: ${fd.gejala || '-'}`,
+      `Tanda bahaya (napas/bengkak/pucat/pingsan/lemas): ${redFlagLabel}`
+    );
+  }
+
+  lines.push(
+    '',
+    `Hasil orientasi aplikasi: ${r.statusLabel}`,
+    `Alasan (dari aplikasi): ${r.alasan.replace(/<[^>]*>/g, '')}`
+  );
+
+  if (r.aiNarasi && r.aiNarasi.length) {
+    lines.push('', 'Catatan tambahan (dibuat AI, bukan diagnosis):', ...r.aiNarasi.map(p => `- ${String(p).replace(/<[^>]*>/g, '')}`));
+  }
+
+  lines.push(
+    '',
+    'Pertanyaan untuk tenaga kesehatan: apakah bahan ini aman diberikan' + (isIncident ? ' ulang' : '') + ', dalam bentuk/jumlah apa, dan tanda apa yang perlu dipantau?'
+  );
+
+  return lines.join('\n');
 }
 
 function renderResult(){
