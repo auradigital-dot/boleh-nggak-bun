@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boleh Nggak, Bun? — Mini App Customer</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FBF6EE;
+    --cream-2:#F5EDE0;
+    --ink:#3A2E26;
+    --coral:#E2725B;
+    --coral-dark:#C85A44;
+    --sage:#6B8E6B;
+    --sage-dark:#4F6E4F;
+    --yellow:#F4C95D;
+    --red:#D64545;
+    --amber:#D98C2B;
+    --green:#4F8F5B;
+    --blue-med:#3E6FA6;
+    --card:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    background:
+      radial-gradient(circle at 10% 0%, rgba(244,201,93,.18), transparent 34%),
+      radial-gradient(circle at 100% 12%, rgba(107,142,107,.14), transparent 30%),
+      var(--cream);
+    color:var(--ink);
+    font-family:'Plus Jakarta Sans',sans-serif;
+    margin:0;
+    min-height:100vh;
+  }
+  h1,h2,h3,.font-display{font-family:'Fraunces',serif;}
+  .card{
+    background:var(--card);
+    border-radius:20px;
+    box-shadow:0 4px 24px rgba(58,46,38,0.08);
+    border:1px solid rgba(58,46,38,.06);
+  }
+  .btn-primary{
+    background:var(--coral);
+    color:#fff;
+    border-radius:14px;
+    font-weight:700;
+    transition:all .15s ease;
+  }
+  .btn-primary:hover{background:var(--coral-dark);transform:translateY(-1px);}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+  .btn-secondary{
+    background:var(--cream-2);
+    color:var(--ink);
+    border-radius:14px;
+    font-weight:600;
+  }
+  .btn-secondary:hover{background:#ECE1CE;}
+  .chip-btn{
+    border:2px solid var(--cream-2);
+    border-radius:14px;
+    background:#fff;
+    transition:all .15s ease;
+    text-align:left;
+  }
+  .chip-btn.selected{
+    border-color:var(--sage);
+    background:#F0F5EE;
+  }
+  .input-field{
+    border:2px solid var(--cream-2);
+    border-radius:12px;
+    padding:12px 14px;
+    width:100%;
+    font-family:'Plus Jakarta Sans',sans-serif;
+    font-size:15px;
+  }
+  .input-field:focus{outline:none;border-color:var(--sage);}
+  .progress-track{background:var(--cream-2);border-radius:99px;height:8px;overflow:hidden;}
+  .progress-fill{background:var(--sage);height:100%;border-radius:99px;transition:width .3s ease;}
+  .error-text{color:var(--red);font-size:13px;margin-top:4px;}
+  .status-badge{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:10px 18px;border-radius:99px;font-weight:800;font-size:15px;
+  }
+  .status-hijau{background:#E7F3E8;color:var(--green);}
+  .status-kuning{background:#FDF3DC;color:var(--amber);}
+  .status-merah{background:#FBE7E5;color:var(--red);}
+  .status-nakes{background:#E8EFF7;color:var(--blue-med);}
+  .status-darurat{background:var(--red);color:#fff;}
+  .result-section-title{
+    font-weight:800;font-size:14px;letter-spacing:.02em;
+    color:var(--coral-dark);text-transform:uppercase;margin-bottom:6px;
+  }
+  .ai-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    background:#F0EAFB;color:#6C4FB6;font-size:12px;font-weight:700;
+    padding:4px 10px;border-radius:99px;
+  }
+  ::placeholder{color:#B8AC9C;}
+  .db-table th{position:sticky;top:0;background:var(--cream-2);}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    margin-bottom:18px;
+  }
+  .brand-lockup{display:flex;align-items:center;gap:10px;font-weight:800;}
+  .brand-mark{
+    width:38px;height:38px;border-radius:12px;background:var(--coral);
+    display:grid;place-items:center;color:#fff;box-shadow:0 7px 18px rgba(226,114,91,.25);
+  }
+  .plan-pill{
+    display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;
+    font-size:11px;font-weight:800;background:#fff;border:1px solid rgba(58,46,38,.08);
+  }
+  .hero-card{overflow:hidden;position:relative;}
+  .hero-card:before{
+    content:"";position:absolute;inset:-90px -120px auto auto;width:260px;height:260px;
+    border-radius:50%;background:rgba(244,201,93,.2);pointer-events:none;
+  }
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;
+    background:#F0F5EE;color:var(--sage-dark);font-size:11px;font-weight:800;
+    letter-spacing:.04em;text-transform:uppercase;
+  }
+  .trust-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .trust-item{
+    background:rgba(255,255,255,.72);border:1px solid rgba(58,46,38,.07);
+    border-radius:14px;padding:12px 8px;text-align:center;font-size:11px;font-weight:700;
+  }
+  .how-step{
+    display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:16px;
+    background:var(--cream);border:1px solid rgba(58,46,38,.05);
+  }
+  .step-number{
+    flex:0 0 28px;width:28px;height:28px;border-radius:10px;background:var(--sage);
+    color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800;
+  }
+  .premium-note{
+    background:#FFF8E7;border:1px solid #F2D992;border-radius:14px;padding:12px 14px;
+    font-size:12px;line-height:1.6;
+  }
+  .action-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  .toast{
+    position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:#fff;border-radius:12px;padding:11px 16px;
+    font-size:13px;font-weight:700;opacity:0;pointer-events:none;z-index:50;
+    transition:.2s ease;max-width:calc(100vw - 32px);text-align:center;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div id="app" class="max-w-2xl mx-auto px-4 py-6 md:py-10"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ============================================================
+   BOLEH NGGAK, BUN? — checker MPASI single-file app
+   Rule engine 100% deterministic untuk status keselamatan.
+   AI (Gemini, via Cloudflare Worker proxy) hanya menambah narasi
+   pendukung yang hangat — TIDAK PERNAH mengubah status yang sudah
+   dihitung oleh rule engine.
+============================================================ */
+
+/*
+  KONFIGURASI PRODUK CUSTOMER
+  - basic: fitur inti + 10 riwayat.
+  - complete: seluruh fitur + 20 riwayat, kartu pengasuh, dan catatan konsultasi.
+  File yang diserahkan ini adalah versi complete dan langsung siap dipakai customer.
+*/
+const APP_PLAN = 'complete'; // basic | complete
+const AI_PROXY_URL = 'https://boleh-nggak-bun-ai-proxy.sansanpulungan.workers.dev'; // proxy Gemini API — kosongkan lagi untuk nonaktifkan fitur (status tetap 100% ditentukan rule engine)
+const AI_PROXY_TIMEOUT_MS = 9000;
+
+function esc(str){
+  return String(str).replace(/[&<>"']/g, c => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[c]));
+}
+
+/* ---------- DATABASE BAHAN (50 item) ----------
+   match: kata kunci pencarian (lowercase)
+   minAge: usia minimal boleh (bulan)
+   category: karbohidrat | protein-hewani | protein-nabati | sayur | buah | lemak | larangan
+   allergen: bahan berpotensi alergen (perlu porsi kecil + jeda 2-3 hari)
+   chokingRisk: true kalau bentuk mentah/utuhnya berisiko tersedak
+   note: catatan singkat yang tampil di kartu hasil & database
+-------------------------------------------------- */
+const DATABASE = [
+  {match:['tempe'], minAge:6, category:'protein-nabati', allergen:false, chokingRisk:false, note:'Protein nabati, rotasi baik dengan protein hewani.'},
+  {match:['tahu'], minAge:6, category:'protein-nabati', allergen:false, chokingRisk:false, note:'Protein nabati, tekstur lembut, mudah dihaluskan.'},
+  {match:['kembung','ikan kembung'], minAge:6, category:'protein-hewani', allergen:true, chokingRisk:true, note:'Omega-3 tinggi. Alergen — porsi kecil awal. Cek duri teliti (risiko tersedak).'},
+  {match:['salmon'], minAge:6, category:'protein-hewani', allergen:true, chokingRisk:true, note:'Omega-3 tinggi. Alergen — porsi kecil awal. Cek duri teliti.'},
+  {match:['lele'], minAge:6, category:'protein-hewani', allergen:true, chokingRisk:true, note:'Alergen — porsi kecil awal. Cek duri teliti.'},
+  {match:['nila'], minAge:6, category:'protein-hewani', allergen:true, chokingRisk:true, note:'Alergen — porsi kecil awal. Cek duri teliti.'},
+  {match:['tongkol','tuna'], minAge:6, category:'protein-hewani', allergen:true, chokingRisk:true, note:'Alergen. Masak matang, cek duri dengan teliti, dan variasikan jenis ikan.'},
+  {match:['udang'], minAge:6, category:'protein-hewani', allergen:true, chokingRisk:false, note:'Alergen seafood — porsi kecil awal, waspada kalau ada riwayat alergi keluarga.'},
+  {match:['kepiting'], minAge:6, category:'protein-hewani', allergen:true, chokingRisk:false, note:'Alergen seafood — porsi kecil awal.'},
+  {match:['cumi'], minAge:8, category:'protein-hewani', allergen:true, chokingRisk:true, note:'Alergen seafood, tekstur kenyal — potong sangat kecil, risiko tersedak.'},
+  {match:['hati ayam'], minAge:6, category:'protein-hewani', allergen:false, chokingRisk:false, note:'Sumber zat besi dan vitamin A. Berikan sebagai bagian dari menu bervariasi; jumlah dan frekuensinya perlu mengikuti panduan ahli yang meninjau konten.'},
+  {match:['ayam cincang','daging ayam'], minAge:6, category:'protein-hewani', allergen:false, chokingRisk:false, note:'Protein hewani utama, cincang halus mulai 9 bulan.'},
+  {match:['daging sapi'], minAge:6, category:'protein-hewani', allergen:false, chokingRisk:false, note:'Protein hewani, cincang halus mulai 9 bulan.'},
+  {match:['telur','telur utuh','kuning telur','putih telur'], minAge:6, category:'protein-hewani', allergen:true, chokingRisk:false, note:'Alergen. Sajikan matang sempurna dan kenalkan sebagai satu bahan baru pada satu waktu; tidak perlu menunda putih telur hanya karena usianya.'},
+  {match:['kacang tanah'], minAge:6, category:'protein-nabati', allergen:true, chokingRisk:true, note:'Alergen. HANYA bentuk bubuk/pasta halus dicampur makanan lain — kacang utuh/cincang risiko tersedak tinggi.'},
+  {match:['almond'], minAge:6, category:'protein-nabati', allergen:true, chokingRisk:true, note:'Alergen. HANYA bentuk bubuk halus — bukan kacang utuh.'},
+  {match:['kacang mete','mete'], minAge:6, category:'protein-nabati', allergen:true, chokingRisk:true, note:'Alergen. HANYA bentuk bubuk halus — bukan kacang utuh.'},
+  {match:['kenari'], minAge:6, category:'protein-nabati', allergen:true, chokingRisk:true, note:'Alergen. HANYA bentuk bubuk halus — bukan kacang utuh.'},
+  {match:['kedelai','susu kedelai'], minAge:6, category:'protein-nabati', allergen:true, chokingRisk:false, note:'Alergen — porsi kecil awal.'},
+  {match:['yogurt'], minAge:6, category:'lemak', allergen:true, chokingRisk:false, note:'Boleh sebagai makanan (bukan minuman utama). Alergen produk susu sapi.'},
+  {match:['keju'], minAge:6, category:'lemak', allergen:true, chokingRisk:false, note:'Boleh porsi kecil sebagai makanan. Alergen produk susu sapi.'},
+  {match:['susu sapi','susu uht','susu segar'], minAge:12, category:'larangan', allergen:true, chokingRisk:false, note:'Sebagai minuman utama baru diberikan setelah 12 bulan. Produk susu yang sesuai dapat dikenalkan sebagai bagian makanan sejak mulai MPASI.'},
+  {match:['santan'], minAge:6, category:'lemak', allergen:false, chokingRisk:false, note:'Lemak tambahan wajar — bukan sebagai cairan utama pengganti ASI/sufor.'},
+  {match:['minyak kelapa','minyak zaitun'], minAge:6, category:'lemak', allergen:false, chokingRisk:false, note:'Lemak tambahan sehat, jumlah wajar.'},
+  {match:['kelor'], minAge:6, category:'sayur', allergen:false, chokingRisk:false, note:'Sumber zat besi & vitamin nabati, dihaluskan.'},
+  {match:['bayam'], minAge:6, category:'sayur', allergen:false, chokingRisk:false, note:'Sumber serat & zat besi nabati.'},
+  {match:['kangkung'], minAge:6, category:'sayur', allergen:false, chokingRisk:false, note:'Kukus & haluskan sesuai tahap tekstur.'},
+  {match:['wortel'], minAge:6, category:'sayur', allergen:false, chokingRisk:true, note:'Kukus sampai lunak dan haluskan/potong kecil — wortel keras berisiko tersedak.'},
+  {match:['labu kuning','labu'], minAge:6, category:'sayur', allergen:false, chokingRisk:false, note:'Tekstur lembut alami, mudah dihaluskan.'},
+  {match:['brokoli'], minAge:6, category:'sayur', allergen:false, chokingRisk:true, note:'Kukus lunak, potong sangat kecil (bentuk kuntum berisiko tersedak kalau besar).'},
+  {match:['buncis'], minAge:6, category:'sayur', allergen:false, chokingRisk:false, note:'Kukus lunak dan haluskan/potong kecil sesuai tahap.'},
+  {match:['tomat'], minAge:6, category:'sayur', allergen:false, chokingRisk:false, note:'Kupas kulit & buang biji dulu untuk tahap awal.'},
+  {match:['kentang'], minAge:6, category:'karbohidrat', allergen:false, chokingRisk:false, note:'Karbohidrat, kukus lunak dan haluskan.'},
+  {match:['ubi'], minAge:6, category:'karbohidrat', allergen:false, chokingRisk:false, note:'Karbohidrat, rasa manis alami disukai bayi.'},
+  {match:['bubur beras','nasi'], minAge:6, category:'karbohidrat', allergen:false, chokingRisk:false, note:'Karbohidrat dasar MPASI, tekstur naik sesuai usia.'},
+  {match:['beras merah'], minAge:6, category:'karbohidrat', allergen:false, chokingRisk:false, note:'Karbohidrat, serat lebih tinggi dari beras putih.'},
+  {match:['oat','oatmeal'], minAge:6, category:'karbohidrat', allergen:false, chokingRisk:false, note:'Karbohidrat; masak hingga lembut dan sesuaikan kekentalan dengan kemampuan makan bayi.'},
+  {match:['pisang'], minAge:6, category:'buah', allergen:false, chokingRisk:false, note:'Pemanis alami, tekstur lumat mudah.'},
+  {match:['alpukat'], minAge:6, category:'buah', allergen:false, chokingRisk:false, note:'Lemak baik alami, tekstur lembut.'},
+  {match:['pepaya'], minAge:6, category:'buah', allergen:false, chokingRisk:false, note:'Serat baik, tekstur lumat mudah.'},
+  {match:['pir'], minAge:6, category:'buah', allergen:false, chokingRisk:true, note:'Kukus sampai lunak atau lumatkan; pir mentah yang keras perlu dihindari karena risiko tersedak.'},
+  {match:['apel'], minAge:6, category:'buah', allergen:false, chokingRisk:true, note:'Kukus/haluskan dulu — apel mentah keras berisiko tersedak sebelum bisa mengunyah baik.'},
+  {match:['anggur'], minAge:6, category:'buah', allergen:false, chokingRisk:true, note:'Jangan diberikan bulat utuh. Potong memanjang menjadi bagian kecil sesuai kemampuan makan dan selalu awasi saat makan.'},
+  {match:['jeruk'], minAge:6, category:'buah', allergen:false, chokingRisk:false, note:'Buang biji dan membran yang keras; sajikan bagian buah dengan tekstur sesuai kemampuan makan.'},
+  {match:['madu'], minAge:12, category:'larangan', allergen:false, chokingRisk:false, note:'DILARANG MUTLAK di bawah 12 bulan (risiko infant botulism) — tanpa pengecualian jumlah atau cara olah.'},
+  {match:['gula pasir','gula'], minAge:24, category:'larangan', allergen:false, chokingRisk:false, note:'Tambahan gula dan makanan/minuman tinggi gula tidak direkomendasikan selama rentang MPASI 6-23 bulan.'},
+  {match:['garam'], minAge:24, category:'larangan', allergen:false, chokingRisk:false, note:'Hindari tambahan garam dan makanan tinggi garam selama rentang MPASI 6-23 bulan.'},
+  {match:['kacang utuh'], minAge:9999, category:'larangan', allergen:true, chokingRisk:true, note:'Kacang utuh/cincang kasar risiko tersedak tinggi — hanya bentuk bubuk halus.'},
+  {match:['popcorn'], minAge:9999, category:'larangan', allergen:false, chokingRisk:true, note:'Risiko tersedak tinggi, tidak direkomendasikan untuk rentang usia MPASI.'},
+  {match:['permen'], minAge:9999, category:'larangan', allergen:false, chokingRisk:true, note:'Permen keras berisiko tersedak tinggi, tidak untuk rentang usia MPASI.'},
+];
+
+function escapeRegex(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+// Word-boundary match, bukan substring mentah — mencegah false positive seperti
+// "nila" ketemu di dalam "vanila", atau "gula" ketemu di dalam "gulai".
+function keywordHit(text, keyword){
+  const re = new RegExp('\\b' + escapeRegex(keyword) + '\\b', 'i');
+  return re.test(text);
+}
+
+function findInDatabase(bahanText){
+  const low = String(bahanText || '').toLowerCase();
+  const hits = DATABASE.filter(item => item.match.some(m => keywordHit(low, m)));
+  return hits;
+}
+
+function ageStageInfo(usia){
+  if (usia < 6) return {label:'sebelum rentang MPASI', tekstur:'Belum masuk rentang panduan MPASI 6–23 bulan.'};
+  if (usia <= 8) return {label:'6–8 bulan', tekstur:'lumat/lembut dan cukup kental; naikkan tekstur bertahap sesuai kemampuan bayi'};
+  if (usia <= 11) return {label:'9–11 bulan', tekstur:'cincang lembut atau finger food yang lunak dan aman digenggam'};
+  return {label:'12–23 bulan', tekstur:'makanan keluarga yang dimodifikasi: lunak, ukuran aman, dan mudah dikunyah'};
+}
+
+function getAlternatif(category, usia, excludeKeys){
+  const exclude = excludeKeys || [];
+  const pool = DATABASE.filter(it =>
+    it.category === category && it.minAge <= usia && !it.chokingRisk && it.category !== 'larangan' &&
+    !it.match.some(m => exclude.includes(m))
+  );
+  if (pool.length) return pool.slice(0, 2).map(it => it.match[0]);
+  const genericByCat = {
+    'karbohidrat':['bubur beras','kentang'],
+    'protein-hewani':['ayam cincang','hati ayam'],
+    'protein-nabati':['tempe','tahu'],
+    'sayur':['wortel','labu kuning'],
+    'buah':['pisang','alpukat'],
+    'lemak':['minyak kelapa','santan'],
+  };
+  return genericByCat[category] || ['bubur beras','pisang'];
+}
+
+/* ---------- ENGINE UTAMA (100% rule-based, deterministik) ---------- */
+function runEngine(fd){
+  const usia = Number(fd.usia);
+  const mode = fd.mode; // 'A' | 'B'
+  const bahanText = fd.bahan;
+  const cara = fd.cara;
+  const pernah = fd.pernah;
+  const riwayatKeluarga = fd.riwayatKeluarga;
+  const gejala = fd.gejala || '';
+
+  // Gerbang darurat memakai pilihan eksplisit, bukan tebakan kata kunci.
+  if (mode === 'B' && fd.redFlag === 'yes') {
+    return {
+      darurat: true,
+      status: 'darurat',
+      statusLabel: '🩺 TANDA BAHAYA — CARI PERTOLONGAN SEKARANG',
+      alasan: `Bunda menandai adanya tanda bahaya setelah makan${gejala ? `: “${esc(gejala)}”` : ''}. Gangguan napas, bibir/wajah membengkak, kulit pucat/kebiruan, pingsan, atau bayi sangat lemas perlu dinilai langsung sebagai keadaan gawat.`,
+      tekstur: 'Tidak relevan sekarang — hentikan pemberian makanan dan prioritaskan pertolongan langsung.',
+      alternatif: [],
+      langkah: [
+        'Hubungi layanan gawat darurat setempat atau bawa bayi ke IGD terdekat sekarang.',
+        `Bawa catatan: bahan (${esc(bahanText) || '-'}), jumlah & waktu (${esc(fd.jumlahWaktu) || '-'}), dan waktu gejala muncul.`,
+        'Jangan berikan ulang bahan tersebut sampai bayi dinilai tenaga kesehatan.'
+      ],
+      catatan: 'Alat ini tidak dapat menilai kegawatan. Jika tanda bahaya sedang terjadi, jangan menunggu hasil online.'
+    };
+  }
+
+  if (mode === 'B' && fd.redFlag === 'unsure') {
+    return {
+      darurat:false, status:'nakes', statusLabel:'🩺 PERLU DINILAI LANGSUNG',
+      alasan:'Bunda belum yakin apakah ada tanda bahaya. Karena kondisi bayi tidak bisa dinilai lewat alat ini, pilihan paling aman adalah meminta penilaian langsung sekarang.',
+      tekstur:'Hentikan sementara pemberian bahan tersebut sampai mendapat arahan tenaga kesehatan.',
+      alternatif: [],
+      langkah:[
+        'Hubungi tenaga kesehatan atau layanan gawat darurat untuk menjelaskan gejala yang terlihat.',
+        'Jika napas terganggu, bibir/wajah membengkak, kulit pucat/kebiruan, bayi pingsan, atau sangat lemas: segera ke IGD.',
+        `Siapkan catatan bahan, jumlah, waktu pemberian, dan gejala: ${esc(gejala) || '-'}.`
+      ],
+      catatan:'Lebih baik diperiksa dan ternyata tidak gawat daripada terlambat mencari pertolongan.'
+    };
+  }
+
+  if (usia < 6) {
+    return {
+      darurat:false, status:'merah', statusLabel:'🔴 TUNDA DULU',
+      alasan:'Panduan ini dirancang untuk rentang MPASI 6–23 bulan. Untuk bayi di bawah 6 bulan, jangan memulai makanan pendamping hanya berdasarkan hasil alat ini.',
+      tekstur:'Belum masuk rentang tekstur yang dinilai oleh alat.',
+      alternatif: [],
+      langkah: ['Diskusikan kesiapan dan waktu mulai MPASI dengan dokter anak atau tenaga kesehatan yang merawat bayi.'],
+      catatan:'Kebutuhan bayi prematur atau bayi dengan kondisi medis dapat berbeda dan perlu panduan individual.'
+    };
+  }
+
+  const stage = ageStageInfo(usia);
+  const hits = findInDatabase(bahanText);
+  const chokingKeywordRaw = /\b(anggur|kacang|popcorn|permen)\b/i.test(bahanText) &&
+    !/dipotong|dihaluskan|bubuk|halus|dilumat/i.test(cara + ' ' + bahanText);
+
+  let status = 'hijau', statusLabel = '🟢 SESUAI TAHAP';
+  let reasons = [];
+  let category = null;
+  let allergenFlagged = false;
+
+  if (!hits.length) {
+    status = 'nakes'; statusLabel = '🩺 KONFIRMASI NAKES';
+    reasons.push(`Bahan "${esc(bahanText)}" belum ada di database aplikasi. Kami tidak menebak keputusan keselamatan untuk bahan yang belum dikenali.`);
+  } else {
+    // ambil status TERBURUK dari semua bahan yang match (kalau user isi lebih dari satu, dipisah koma)
+    let worstRank = 0; // 0 hijau,1 kuning,2 merah,3 nakes
+    const rankMap = {hijau:0, kuning:1, merah:2, nakes:3};
+
+    hits.forEach(item => {
+      category = category || item.category;
+      let itemStatus = 'hijau';
+      let itemReason = '';
+
+      if (item.category === 'larangan' && usia < item.minAge) {
+        itemStatus = 'merah';
+        itemReason = `"${item.match[0]}" — ${item.note}`;
+      } else if (usia < item.minAge) {
+        itemStatus = 'merah';
+        itemReason = `"${item.match[0]}" umumnya baru dianjurkan mulai ${item.minAge} bulan — bayi Bunda masih ${usia} bulan.`;
+      } else if (item.allergen && pernah === 'belum') {
+        itemStatus = 'kuning';
+        allergenFlagged = true;
+        itemReason = `"${item.match[0]}" berpotensi memicu alergi. Kenalkan dalam bentuk matang dan aman, dengan jumlah kecil sebagai satu bahan baru agar reaksi lebih mudah dikenali. ${item.note}`;
+      } else if (item.chokingRisk) {
+        itemStatus = 'kuning';
+        itemReason = `"${item.match[0]}" berisiko tersedak kalau bentuknya salah. ${item.note}`;
+      } else {
+        itemStatus = 'hijau';
+        itemReason = `"${item.match[0]}" sesuai tahap usia bayi Bunda. ${item.note}`;
+      }
+
+      // riwayat reaksi sebelumnya pada bahan ini -> minimal konfirmasi nakes
+      if (pernah === 'reaksi') {
+        itemStatus = 'nakes';
+        itemReason += ` Karena sebelumnya pernah ada reaksi, sebaiknya dikonfirmasi ke dokter/nakes dulu sebelum dicoba lagi.`;
+      }
+      // riwayat alergi keluarga relevan
+      if (item.allergen && riwayatKeluarga && item.match.some(m => riwayatKeluarga.toLowerCase().includes(m))) {
+        itemStatus = rankMap[itemStatus] < rankMap['kuning'] ? 'kuning' : itemStatus;
+        itemReason += ' Ada riwayat alergi keluarga; kenalkan dengan lebih waspada. Bila bayi memiliki eksim berat atau alergi yang sudah diketahui, minta rencana individual dari tenaga kesehatan.';
+      }
+
+      if (rankMap[itemStatus] > worstRank) worstRank = rankMap[itemStatus];
+      reasons.push(itemReason);
+    });
+
+    const rankToStatus = ['hijau','kuning','merah','nakes'];
+    status = rankToStatus[worstRank];
+    statusLabel = {
+      hijau:'🟢 SESUAI TAHAP', kuning:'🟡 PERLU PERHATIAN',
+      merah:'🔴 TUNDA DULU', nakes:'🩺 KONFIRMASI NAKES'
+    }[status];
+  }
+
+  // cara olah menambah risiko tersedak generik (di luar database)
+  if (chokingKeywordRaw && status !== 'nakes') {
+    status = 'merah'; statusLabel = '🔴 TUNDA DULU';
+    reasons.push('Bentuk/cara olah yang disebut berisiko tersedak tinggi kalau tidak dipotong memanjang/dihaluskan dengan benar.');
+  }
+
+  const alternatif = (status === 'merah' || status === 'kuning') && category
+    ? getAlternatif(category, usia, hits.flatMap(h => h.match)) : [];
+
+  const langkahA = [
+    status === 'hijau'
+      ? `Boleh dicoba dengan tekstur ${stage.tekstur}. Mulai dari jumlah kecil dan ikuti respons bayi.`
+      : status === 'kuning'
+      ? 'Boleh dipertimbangkan dengan kehati-hatian ekstra: bentuk aman, jumlah kecil, dan satu bahan baru pada satu waktu.'
+      : status === 'merah'
+      ? 'Tunda dulu sampai usia/persiapan yang sesuai tercapai — coba alternatif di bawah untuk sekarang.'
+      : 'Konsultasikan ke dokter/nakes dulu sebelum mencoba bahan ini.',
+    allergenFlagged ? 'Kenalkan saat bayi sehat dan dapat diamati; jangan mencampur beberapa bahan baru sekaligus.' : null,
+  ].filter(Boolean);
+
+  const langkahB = [
+    'Hentikan sementara bahan tersebut bila muncul gejala dan catat waktu, jumlah, serta perubahan yang terlihat.',
+    'Jika muncul gangguan napas, bibir/wajah membengkak, pucat/kebiruan, pingsan, atau sangat lemas: segera cari pertolongan gawat darurat.',
+    status === 'nakes' || status === 'merah'
+      ? 'Minta arahan tenaga kesehatan sebelum memberi ulang bahan ini.'
+      : 'Jika bayi tetap baik, lanjutkan pemantauan dan berikan kembali hanya sesuai respons bayi serta panduan tenaga kesehatan.'
+  ];
+
+  return {
+    darurat:false,
+    status, statusLabel,
+    alasan: reasons.join(' '),
+    tekstur: mode === 'A'
+      ? `Tahap usia ${stage.label}: ${stage.tekstur}.`
+      : `Tahap usia ${stage.label}: ${stage.tekstur}.`,
+    alternatif,
+    langkah: mode === 'A' ? langkahA : langkahB,
+    catatan: 'Ini bantuan orientasi awal, bukan pengganti pemeriksaan dokter/nakes — kalau ragu atau ada tanda bahaya, segera konsultasi.'
+  };
+}
+
+/* ---------- STATE & RENDER ---------- */
+const initialFormData = {
+  mode:null, usia:'', bahan:'', cara:'', pernah:'', riwayatKeluarga:'',
+  jumlahWaktu:'', gejala:'', redFlag:''
+};
+
+let state = {
+  view:'welcome', // welcome | form | result | database | history
+  step:1,
+  formData: {...initialFormData},
+  result:null,
+  errors:{},
+  history:[],
+};
+
+function isComplete(){ return APP_PLAN === 'complete'; }
+function planLabel(){
+  return APP_PLAN === 'complete' ? 'Tenang Lengkap' : APP_PLAN === 'basic' ? 'Cek Dasar' : 'Coba Gratis';
+}
+
+function saveState(){
+  try{
+    localStorage.setItem('bnb_state', JSON.stringify({
+      formData:state.formData,
+      history:state.history
+    }));
+  }catch(e){}
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem('bnb_state');
+    if (raw){
+      const parsed = JSON.parse(raw);
+      if (parsed.formData) state.formData = {...initialFormData, ...parsed.formData};
+      if (Array.isArray(parsed.history)) state.history = parsed.history;
+    }
+  }catch(e){}
+}
+
+function totalSteps(){ return state.formData.mode === 'B' ? 5 : 4; }
+
+function goStep(n){ state.step = n; state.errors = {}; render(); }
+
+function validateStep(){
+  const fd = state.formData; const errs = {};
+  if (state.step === 1 && !fd.mode) errs.mode = 'Pilih salah satu dulu ya, Bun.';
+  if (state.step === 2){
+    if (fd.usia === '' || Number(fd.usia) < 0 || Number(fd.usia) > 23) errs.usia = 'Isi usia bayi dalam bulan (0–23) ya, Bun.';
+  }
+  if (state.step === 3){
+    if (!fd.bahan || !fd.bahan.trim()) errs.bahan = 'Tulis dulu bahan/makanan yang mau dicek ya, Bun.';
+    if (!fd.cara) errs.cara = 'Pilih cara pengolahannya dulu ya.';
+  }
+  if (state.step === 4){
+    if (!fd.pernah) errs.pernah = 'Pilih salah satu dulu ya, Bun.';
+  }
+  if (state.step === 5 && fd.mode === 'B'){
+    if (!fd.jumlahWaktu || !fd.jumlahWaktu.trim()) errs.jumlahWaktu = 'Isi jumlah & waktu pemberian ya, Bun.';
+    if (!fd.gejala || !fd.gejala.trim()) errs.gejala = 'Tulis gejalanya, atau ketik "tidak ada gejala" kalau memang tidak ada.';
+    if (!fd.redFlag) errs.redFlag = 'Pilih kondisi tanda bahaya agar hasil tidak salah arah.';
+  }
+  state.errors = errs;
+  return Object.keys(errs).length === 0;
+}
+
+function nextStep(){
+  if (!validateStep()) { render(); return; }
+  const last = totalSteps();
+  if (state.step < last){
+    state.step += 1; render();
+  } else {
+    submitForm();
+  }
+}
+function prevStep(){
+  if (state.step > 1){ state.step -= 1; state.errors = {}; render(); }
+  else { state.view = 'welcome'; render(); }
+}
+
+function submitForm(){
+  const result = runEngine(state.formData);
+  state.result = result;
+  state.history.unshift({ formData: {...state.formData}, result, ts: Date.now() });
+  state.history = state.history.slice(0, isComplete() ? 20 : 10);
+  state.view = 'result';
+  saveState();
+  render();
+  tryEnhanceWithAI(state.formData, result);
+}
+
+function resetForm(){
+  state.formData = {...initialFormData};
+  state.result = null;
+  state.step = 1;
+  state.view = 'welcome';
+  render();
+}
+
+function editData(){
+  state.formData = {...initialFormData};
+  state.view = 'form';
+  state.step = 1;
+  render();
+}
+
+function showToast(message){
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add('show');
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => toast.classList.remove('show'), 2800);
+}
+
+/* ---------- AI ENHANCEMENT (opsional, Gemini via Cloudflare Worker proxy) ---------- */
+function tryEnhanceWithAI(formData, result){
+  if (!AI_PROXY_URL) return; // fitur nonaktif, hasil rule-based yang tampil tetap dipakai apa adanya
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AI_PROXY_TIMEOUT_MS);
+
+  fetch(AI_PROXY_URL, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify({
+      formData: {
+        usia: formData.usia, mode: formData.mode, bahan: formData.bahan,
+        cara: formData.cara, pernah: formData.pernah,
+        riwayatKeluarga: formData.riwayatKeluarga,
+        jumlahWaktu: formData.jumlahWaktu, gejala: formData.gejala,
+      },
+      // status SUDAH FINAL dari rule engine — dikirim ke AI supaya AI tidak boleh mengubahnya,
+      // hanya menambah narasi pendukung yang konsisten dengan status ini
+      statusLabel: result.statusLabel,
+      darurat: result.darurat,
+    }),
+    signal: controller.signal,
+  })
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(data => {
+      clearTimeout(timer);
+      if (!data || !data.ok || !Array.isArray(data.narasi) || !data.narasi.length) return;
+      // hanya menambah catatan naratif tambahan — TIDAK mengubah status/statusLabel/darurat
+      if (state.result && state.result === result){
+        state.result.aiNarasi = data.narasi.map(p => esc(String(p)));
+        state.result.aiEnhanced = true;
+        if (state.view === 'result') render();
+      }
+    })
+    .catch(() => { clearTimeout(timer); /* diam-diam gagal, hasil rule-based tetap dipakai */ });
+}
+
+/* ---------- RENDER ---------- */
+function render(){
+  const app = document.getElementById('app');
+  let content = '';
+  if (state.view === 'welcome') content = renderWelcome();
+  else if (state.view === 'form') content = renderForm();
+  else if (state.view === 'result') content = renderResult();
+  else if (state.view === 'database') content = renderDatabase();
+  else if (state.view === 'history') content = renderHistory();
+  app.innerHTML = `${renderTopbar()}${content}${renderFooter()}`;
+  attachHandlers();
+  window.scrollTo({top:0, behavior:'instant'});
+}
+
+function renderTopbar(){
+  return `<div class="topbar">
+    <button data-action="back-welcome" class="brand-lockup" aria-label="Kembali ke beranda">
+      <span class="brand-mark">B?</span>
+      <span>Boleh Nggak, Bun?</span>
+    </button>
+    <span class="plan-pill">● ${planLabel()}</span>
+  </div>`;
+}
+
+function renderWelcome(){
+  return `
+  <section class="card hero-card p-7 md:p-9 mb-5">
+    <div class="relative">
+      <span class="eyebrow">Asisten keputusan MPASI Bunda</span>
+      <h1 class="font-display text-3xl md:text-4xl font-semibold mt-4 mb-3 leading-tight" style="color:var(--coral-dark)">
+        Halo, Bun. Mau cek apa hari ini?
+      </h1>
+      <p class="text-sm md:text-base opacity-75 leading-relaxed mb-6">
+        Pilih situasi di bawah. Hasil akan mempertimbangkan usia, bahan,
+        cara olah, riwayat, dan gejala yang Bunda masukkan.
+      </p>
+      <div class="grid gap-3">
+      <button data-action="start-mode" data-value="A" class="chip-btn p-4">
+        <div class="font-bold mb-1">🕐 Belum Diberikan — Cek Dulu</div>
+        <div class="text-sm opacity-70">Periksa sebelum bahan diberikan kepada bayi.</div>
+      </button>
+      <button data-action="start-mode" data-value="B" class="chip-btn p-4">
+        <div class="font-bold mb-1">⚠️ Sudah Terlanjur — Cek Langkah Berikutnya</div>
+        <div class="text-sm opacity-70">Catat kejadian dan periksa apakah ada tanda bahaya.</div>
+      </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card p-6 md:p-8 mb-5">
+    <div class="flex items-center justify-between gap-3 mb-4">
+      <h2 class="font-display text-2xl font-semibold">Menu Bunda</h2>
+      <span class="text-xs opacity-55">${state.history.length} hasil tersimpan</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <button data-action="start" class="how-step text-left">
+        <span class="step-number">✓</span><div><strong>Cek Baru</strong><p class="text-xs opacity-65 mt-1">Mulai dari awal</p></div>
+      </button>
+      <button data-action="view-database" class="how-step text-left">
+        <span class="step-number">50</span><div><strong>Database</strong><p class="text-xs opacity-65 mt-1">Bahan lokal</p></div>
+      </button>
+      <button data-action="view-history" class="how-step text-left">
+        <span class="step-number">↻</span><div><strong>Riwayat</strong><p class="text-xs opacity-65 mt-1">Hasil sebelumnya</p></div>
+      </button>
+    </div>
+  </section>
+
+  <section class="card p-6 mb-5">
+    <h3 class="font-display text-xl font-semibold mb-3">Cara membaca hasil</h3>
+    <div class="grid grid-cols-2 gap-2 text-xs">
+      <div class="status-hijau rounded-xl p-3"><strong>🟢 Sesuai tahap</strong><br>Bisa dipertimbangkan sesuai cara saji.</div>
+      <div class="status-kuning rounded-xl p-3"><strong>🟡 Perlu perhatian</strong><br>Ada hal yang perlu disesuaikan.</div>
+      <div class="status-merah rounded-xl p-3"><strong>🔴 Tunda dulu</strong><br>Belum sesuai usia atau bentuknya.</div>
+      <div class="status-nakes rounded-xl p-3"><strong>🩺 Konfirmasi nakes</strong><br>Perlu arahan individual.</div>
+    </div>
+  </section>`;
+}
+
+function renderFooter(){
+  return `<footer class="text-center text-xs opacity-55 py-3 leading-relaxed">
+    Dibuat untuk orientasi awal MPASI 6–23 bulan.<br>
+    Jangan gunakan aplikasi untuk menunda pertolongan saat ada tanda bahaya.
+  </footer>`;
+}
+
+function renderProgress(){
+  const pct = Math.round((state.step / totalSteps()) * 100);
+  return `<div class="mb-6"><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <p class="text-xs opacity-60 mt-2">Langkah ${state.step} dari ${totalSteps()}</p></div>`;
+}
+
+function renderForm(){
+  const fd = state.formData; const err = state.errors;
+  let body = '';
+
+  if (state.step === 1){
+    body = `
+      <h2 class="font-display text-2xl font-semibold mb-2">Pilih situasinya, Bun</h2>
+      <p class="text-sm opacity-70 mb-5">Mau cek sebelum kasih, atau sudah kadung diberikan?</p>
+      <div class="grid grid-cols-1 gap-3">
+        <button data-action="pick-mode" data-value="A" class="chip-btn p-4 ${fd.mode==='A'?'selected':''}">
+          <div class="font-bold mb-1">🕐 Belum Diberikan — Cek Dulu</div>
+          <div class="text-sm opacity-70">Mau tahu boleh/tidak sebelum menyuapkan</div>
+        </button>
+        <button data-action="pick-mode" data-value="B" class="chip-btn p-4 ${fd.mode==='B'?'selected':''}">
+          <div class="font-bold mb-1">⚠️ Sudah Terlanjur — Apa Langkah Berikutnya</div>
+          <div class="text-sm opacity-70">Sudah kadung diberikan, mau tahu harus ngapain</div>
+        </button>
+      </div>
+      ${err.mode ? `<p class="error-text">${err.mode}</p>` : ''}
+    `;
+  } else if (state.step === 2){
+    body = `
+      <h2 class="font-display text-2xl font-semibold mb-2">Usia bayi saat ini</h2>
+      <p class="text-sm opacity-70 mb-5">Dalam bulan ya, Bun — aplikasi ini dibuat untuk rentang 0–23 bulan.</p>
+      <input type="number" min="0" max="23" class="input-field" id="input-usia" placeholder="contoh: 8" value="${esc(fd.usia)}">
+      ${err.usia ? `<p class="error-text">${err.usia}</p>` : ''}
+    `;
+  } else if (state.step === 3){
+    body = `
+      <h2 class="font-display text-2xl font-semibold mb-2">Bahan & cara olah</h2>
+      <p class="text-sm opacity-70 mb-4">Bahan apa yang mau dicek, dan bagaimana cara mengolahnya?</p>
+      <label class="text-sm font-semibold mb-1 block">Bahan/makanan yang dicek</label>
+      <input type="text" class="input-field mb-1" id="input-bahan" placeholder="contoh: ikan kembung, santan" value="${esc(fd.bahan)}">
+      ${err.bahan ? `<p class="error-text mb-3">${err.bahan}</p>` : '<p class="text-xs opacity-50 mb-3">Boleh lebih dari satu, pisahkan koma.</p>'}
+      <label class="text-sm font-semibold mb-1 block">Cara pengolahan</label>
+      <select class="input-field" id="input-cara">
+        <option value="">Pilih cara olah...</option>
+        ${['dikukus','direbus','digoreng','dipanggang','mentah (buah)','tidak tahu'].map(c =>
+          `<option value="${c}" ${fd.cara===c?'selected':''}>${c}</option>`).join('')}
+      </select>
+      ${err.cara ? `<p class="error-text">${err.cara}</p>` : ''}
+    `;
+  } else if (state.step === 4){
+    body = `
+      <h2 class="font-display text-2xl font-semibold mb-2">Riwayat</h2>
+      <label class="text-sm font-semibold mb-1 block">Pernah diberikan ke bayi ini sebelumnya?</label>
+      <select class="input-field mb-1" id="input-pernah">
+        <option value="">Pilih...</option>
+        <option value="belum" ${fd.pernah==='belum'?'selected':''}>Belum pernah sama sekali</option>
+        <option value="aman" ${fd.pernah==='aman'?'selected':''}>Pernah, aman-aman saja</option>
+        <option value="reaksi" ${fd.pernah==='reaksi'?'selected':''}>Pernah, dan ada reaksi</option>
+      </select>
+      ${err.pernah ? `<p class="error-text mb-3">${err.pernah}</p>` : '<div class="mb-3"></div>'}
+      <label class="text-sm font-semibold mb-1 block">Riwayat alergi keluarga inti</label>
+      <input type="text" class="input-field" id="input-riwayat" placeholder='contoh: "tidak ada" atau "kakaknya alergi udang"' value="${esc(fd.riwayatKeluarga)}">
+    `;
+  } else if (state.step === 5){
+    body = `
+      <h2 class="font-display text-2xl font-semibold mb-2">Detail kejadian</h2>
+      <label class="text-sm font-semibold mb-1 block">Jumlah & waktu pemberian</label>
+      <input type="text" class="input-field mb-1" id="input-jumlah" placeholder="contoh: 2 sendok makan, tadi siang jam 12" value="${esc(fd.jumlahWaktu)}">
+      ${err.jumlahWaktu ? `<p class="error-text mb-3">${err.jumlahWaktu}</p>` : '<div class="mb-3"></div>'}
+      <label class="text-sm font-semibold mb-1 block">Gejala setelah makan (kalau ada)</label>
+      <textarea class="input-field" id="input-gejala" rows="3" placeholder='contoh: "tidak ada gejala apa pun" atau "muncul ruam merah di pipi"'>${esc(fd.gejala)}</textarea>
+      ${err.gejala ? `<p class="error-text mb-4">${err.gejala}</p>` : '<div class="mb-4"></div>'}
+      <div class="p-4 rounded-2xl" style="background:#FFF4F1;border:1px solid #F2C3B8">
+        <label class="text-sm font-bold mb-2 block">Ada salah satu tanda bahaya ini?</label>
+        <p class="text-xs opacity-70 mb-3">Napas terganggu, bibir/wajah membengkak, pucat/kebiruan, pingsan, atau bayi sangat lemas.</p>
+        <select class="input-field" id="input-redflag">
+          <option value="">Pilih kondisi...</option>
+          <option value="no" ${fd.redFlag==='no'?'selected':''}>Tidak ada tanda tersebut</option>
+          <option value="yes" ${fd.redFlag==='yes'?'selected':''}>Ya, ada salah satunya</option>
+          <option value="unsure" ${fd.redFlag==='unsure'?'selected':''}>Saya tidak yakin</option>
+        </select>
+        ${err.redFlag ? `<p class="error-text">${err.redFlag}</p>` : ''}
+      </div>
+    `;
+  }
+
+  return `
+  <div class="card p-6 md:p-8">
+    ${renderProgress()}
+    ${body}
+    <div class="flex gap-3 mt-8">
+      <button data-action="prev" class="btn-secondary py-3 px-5 flex-1">Kembali</button>
+      <button data-action="next" class="btn-primary py-3 px-5 flex-[2]">${state.step === totalSteps() ? 'Lihat Hasil' : 'Lanjut'}</button>
+    </div>
+  </div>`;
+}
+
+function statusClass(status){
+  return { hijau:'status-hijau', kuning:'status-kuning', merah:'status-merah', nakes:'status-nakes', darurat:'status-darurat' }[status] || 'status-nakes';
+}
+
+function resultText(){
+  const r = state.result;
+  if (!r) return '';
+  return [
+    'BOLEH NGGAK, BUN? — HASIL CEK',
+    `Bayi: ${state.formData.usia} bulan`,
+    `Bahan: ${state.formData.bahan}`,
+    `Status: ${r.statusLabel.replace(/^[^\w🩺🔴🟡🟢]+/u, '')}`,
+    `Alasan: ${r.alasan.replace(/<[^>]*>/g, '')}`,
+    `Penyajian: ${r.tekstur}`,
+    'Langkah berikutnya:',
+    ...r.langkah.map((l, i) => `${i + 1}. ${String(l).replace(/<[^>]*>/g, '')}`),
+    '',
+    'Orientasi awal, bukan diagnosis atau pengganti pemeriksaan tenaga kesehatan.'
+  ].join('\n');
+}
+
+function caregiverText(){
+  return [
+    '📌 KARTU PENGASUH — BOLEH NGGAK, BUN?',
+    `Untuk bayi usia ${state.formData.usia} bulan`,
+    `Bahan yang dicek: ${state.formData.bahan}`,
+    `Status: ${state.result.statusLabel}`,
+    `Cara olah/tekstur: ${state.formData.cara}; ${state.result.tekstur}`,
+    `Yang perlu dilakukan: ${state.result.langkah.join(' ')}`,
+    'Jika muncul gangguan napas, bengkak pada bibir/wajah, pucat/kebiruan, pingsan, atau sangat lemas: cari pertolongan gawat darurat.'
+  ].join('\n');
+}
+
+function consultationText(){
+  const fd = state.formData;
+  return [
+    'RINGKASAN UNTUK KONSULTASI',
+    `Usia bayi: ${fd.usia} bulan`,
+    `Bahan dan cara olah: ${fd.bahan} — ${fd.cara}`,
+    `Pernah diberikan: ${fd.pernah}`,
+    `Riwayat keluarga: ${fd.riwayatKeluarga || '-'}`,
+    `Jumlah/waktu: ${fd.jumlahWaktu || '-'}`,
+    `Gejala: ${fd.gejala || '-'}`,
+    `Tanda bahaya dipilih: ${fd.redFlag || '-'}`,
+    `Hasil orientasi aplikasi: ${state.result.statusLabel}`,
+    'Pertanyaan untuk tenaga kesehatan: apakah bahan ini aman diberikan ulang, dalam bentuk apa, dan tanda apa yang perlu dipantau?'
+  ].join('\n');
+}
+
+function renderResult(){
+  const r = state.result;
+  if (!r) return renderWelcome();
+  return `
+  <div class="card p-6 md:p-8">
+    <div class="text-center mb-6">
+      <span class="status-badge ${statusClass(r.status)}">${r.statusLabel}</span>
+      ${r.aiEnhanced ? `<div class="mt-2"><span class="ai-badge">✨ Disempurnakan AI</span></div>` : ''}
+    </div>
+
+    <div class="mb-5">
+      <div class="result-section-title">Alasan</div>
+      <p class="text-sm leading-relaxed">${r.alasan}</p>
+    </div>
+
+    <div class="mb-5">
+      <div class="result-section-title">Tekstur & Cara Penyajian</div>
+      <p class="text-sm leading-relaxed">${r.tekstur}</p>
+    </div>
+
+    ${r.alternatif && r.alternatif.length ? `
+    <div class="mb-5">
+      <div class="result-section-title">Alternatif</div>
+      <ul class="text-sm list-disc list-inside space-y-1">
+        ${r.alternatif.map(a => `<li>${esc(a)}</li>`).join('')}
+      </ul>
+    </div>` : ''}
+
+    <div class="mb-5">
+      <div class="result-section-title">Langkah Berikutnya</div>
+      <ul class="text-sm list-disc list-inside space-y-1">
+        ${r.langkah.map(l => `<li>${l}</li>`).join('')}
+      </ul>
+    </div>
+
+    ${r.aiNarasi && r.aiNarasi.length ? `
+    <div class="mb-5 p-4 rounded-2xl" style="background:#F7F3FC">
+      <div class="result-section-title" style="color:#6C4FB6">Catatan Tambahan</div>
+      ${r.aiNarasi.map(p => `<p class="text-sm leading-relaxed mb-2">${p}</p>`).join('')}
+    </div>` : ''}
+
+    <div class="p-3 rounded-xl bg-[var(--cream-2)] text-xs opacity-70 mb-4">${r.catatan}</div>
+
+    <details class="text-xs opacity-70 mb-6">
+      <summary class="cursor-pointer font-bold">Lihat dasar referensi umum</summary>
+      <div class="grid gap-1 mt-2">
+        <a class="underline" target="_blank" rel="noopener" href="https://www.who.int/health-topics/complementary-feeding">WHO · Complementary feeding</a>
+        <a class="underline" target="_blank" rel="noopener" href="https://www.cdc.gov/infant-toddler-nutrition/foods-and-drinks/when-what-and-how-to-introduce-solid-foods.html">CDC · Pengenalan makanan dan alergen</a>
+        <a class="underline" target="_blank" rel="noopener" href="https://www.cdc.gov/infant-toddler-nutrition/foods-and-drinks/choking-hazards.html">CDC · Risiko tersedak</a>
+      </div>
+    </details>
+
+    <div class="action-grid mb-3">
+      <button data-action="copy-result" class="btn-secondary py-3 px-4 text-sm">Salin Hasil</button>
+      <button data-action="print-result" class="btn-secondary py-3 px-4 text-sm">Cetak / PDF</button>
+      <button data-action="share-caregiver" class="btn-secondary py-3 px-4 text-sm">Kartu WhatsApp</button>
+      <button data-action="copy-consult" class="btn-secondary py-3 px-4 text-sm">Catatan Konsultasi</button>
+    </div>
+
+    <div class="flex gap-3">
+      <button data-action="edit-data" class="btn-secondary py-3 px-5 flex-1">Cek Bahan Lain</button>
+      <button data-action="reset" class="btn-primary py-3 px-5 flex-1">Ke Beranda</button>
+    </div>
+  </div>`;
+}
+
+function renderDatabase(){
+  const rows = DATABASE.map(item => {
+    const label = item.category === 'larangan'
+      ? (item.minAge >= 9999 ? 'Hindari (risiko tersedak/alergen berat)' : `Mulai ${item.minAge} bln`)
+      : `Mulai ${item.minAge} bln`;
+    return `<tr class="border-b border-[var(--cream-2)]">
+      <td class="py-2 pr-3 font-semibold capitalize">${esc(item.match[0])}</td>
+      <td class="py-2 pr-3 text-xs">${label}</td>
+      <td class="py-2 pr-3 text-xs">${item.allergen ? 'Alergen' : ''} ${item.chokingRisk ? '⚠️ Tersedak' : ''}</td>
+      <td class="py-2 text-xs opacity-70">${esc(item.note)}</td>
+    </tr>`;
+  }).join('');
+  return `
+  <div class="card p-6 md:p-8">
+    <button data-action="back-welcome" class="text-sm underline opacity-70 mb-4">← Kembali</button>
+    <span class="eyebrow">Referensi cepat</span>
+    <h2 class="font-display text-3xl font-semibold mt-3 mb-3">Database 50 Bahan Lokal</h2>
+    <p class="text-sm opacity-70 mb-4">Referensi cepat, bukan keputusan personal. Gunakan fitur cek untuk mempertimbangkan usia, cara olah, dan riwayat bayi.</p>
+    <div class="overflow-x-auto max-h-[62vh] overflow-y-auto">
+      <table class="db-table w-full text-left border-collapse">
+        <thead><tr>
+          <th class="py-2 pr-3">Bahan</th><th class="py-2 pr-3">Usia</th><th class="py-2 pr-3">Catatan</th><th class="py-2">Keterangan</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function renderHistory(){
+  const entries = state.history.map((entry, index) => `
+    <article class="p-4 rounded-2xl border border-[var(--cream-2)]">
+      <div class="flex justify-between gap-3 mb-2">
+        <strong class="capitalize">${esc(entry.formData.bahan)}</strong>
+        <span class="text-xs opacity-55">${new Date(entry.ts).toLocaleDateString('id-ID')}</span>
+      </div>
+      <span class="status-badge ${statusClass(entry.result.status)}" style="font-size:11px;padding:6px 10px">${entry.result.statusLabel}</span>
+      <p class="text-xs opacity-65 mt-2">${esc(entry.formData.usia)} bulan · ${entry.formData.mode === 'B' ? 'Sudah diberikan' : 'Cek sebelum diberikan'}</p>
+      <button data-action="open-history" data-index="${index}" class="text-sm underline mt-3">Buka hasil</button>
+    </article>`).join('');
+  return `<div class="card p-6 md:p-8">
+    <button data-action="back-welcome" class="text-sm underline opacity-70 mb-4">← Kembali</button>
+    <h2 class="font-display text-3xl font-semibold mb-2">Riwayat Keputusan</h2>
+    <p class="text-sm opacity-70 mb-5">Tersimpan hanya di perangkat ini. ${isComplete() ? 'Maksimal 20' : 'Maksimal 10'} hasil terbaru.</p>
+    <div class="grid gap-3">${entries || '<div class="premium-note">Belum ada hasil tersimpan. Mulai cek bahan pertama Bunda.</div>'}</div>
+  </div>`;
+}
+
+function copyText(text, successMessage){
+  const fallback = () => {
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    area.remove();
+    showToast(successMessage);
+  };
+  if (navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(() => showToast(successMessage)).catch(fallback);
+  } else fallback();
+}
+
+function startCheck(mode=null){
+  state.formData = {...initialFormData, mode};
+  state.view = 'form';
+  state.step = mode ? 2 : 1;
+  state.errors = {};
+  render();
+}
+
+function attachHandlers(){
+  const app = document.getElementById('app');
+  app.querySelectorAll('[data-action]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      const action = el.getAttribute('data-action');
+      if (action === 'start'){ startCheck(); }
+      else if (action === 'start-mode'){ startCheck(el.getAttribute('data-value')); }
+      else if (action === 'view-database'){ state.view='database'; render(); }
+      else if (action === 'back-welcome'){ state.view='welcome'; render(); }
+      else if (action === 'view-history'){ state.view='history'; render(); }
+      else if (action === 'pick-mode'){ state.formData.mode = el.getAttribute('data-value'); render(); }
+      else if (action === 'next'){ syncInputs(); nextStep(); }
+      else if (action === 'prev'){ syncInputs(); prevStep(); }
+      else if (action === 'edit-data'){ editData(); }
+      else if (action === 'reset'){ resetForm(); }
+      else if (action === 'copy-result'){ copyText(resultText(), 'Hasil berhasil disalin.'); }
+      else if (action === 'copy-consult'){ copyText(consultationText(), 'Catatan konsultasi berhasil disalin.'); }
+      else if (action === 'share-caregiver'){
+        const message = caregiverText();
+        const wa = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        window.open(wa, '_blank', 'noopener');
+      }
+      else if (action === 'print-result'){ window.print(); }
+      else if (action === 'open-history'){
+        const item = state.history[Number(el.getAttribute('data-index'))];
+        if (item){
+          state.formData = {...initialFormData, ...item.formData};
+          state.result = item.result;
+          state.view = 'result';
+          render();
+        }
+      }
+    });
+  });
+}
+
+function syncInputs(){
+  const fd = state.formData;
+  const g = id => document.getElementById(id);
+  if (g('input-usia')) fd.usia = g('input-usia').value;
+  if (g('input-bahan')) fd.bahan = g('input-bahan').value;
+  if (g('input-cara')) fd.cara = g('input-cara').value;
+  if (g('input-pernah')) fd.pernah = g('input-pernah').value;
+  if (g('input-riwayat')) fd.riwayatKeluarga = g('input-riwayat').value;
+  if (g('input-jumlah')) fd.jumlahWaktu = g('input-jumlah').value;
+  if (g('input-gejala')) fd.gejala = g('input-gejala').value;
+  if (g('input-redflag')) fd.redFlag = g('input-redflag').value;
+}
+
+loadState();
+render();
+</script>
+</body>
+</html>
