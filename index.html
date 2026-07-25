@@ -446,12 +446,17 @@ const initialFormData = {
 };
 
 let state = {
-  view:'welcome', // welcome | form | result | database | history
+  view:'welcome', // login | welcome | form | result | database | history
   step:1,
   formData: {...initialFormData},
   result:null,
   errors:{},
   history:[],
+  auth: { token:null, email:null }, // riwayat kini terikat akun, bukan cuma perangkat
+  authMode: 'login', // login | register
+  authError: '',
+  authBusy: false,
+  historyBusy: false,
 };
 
 function isComplete(){ return APP_PLAN === 'complete'; }
@@ -462,8 +467,7 @@ function planLabel(){
 function saveState(){
   try{
     localStorage.setItem('bnb_state', JSON.stringify({
-      formData:state.formData,
-      history:state.history
+      formData:state.formData
     }));
   }catch(e){}
 }
@@ -473,9 +477,58 @@ function loadState(){
     if (raw){
       const parsed = JSON.parse(raw);
       if (parsed.formData) state.formData = {...initialFormData, ...parsed.formData};
-      if (Array.isArray(parsed.history)) state.history = parsed.history;
     }
   }catch(e){}
+}
+
+function saveAuth(){
+  try{
+    if (state.auth.token) localStorage.setItem('bnb_auth', JSON.stringify(state.auth));
+    else localStorage.removeItem('bnb_auth');
+  }catch(e){}
+}
+function loadAuth(){
+  try{
+    const raw = localStorage.getItem('bnb_auth');
+    if (raw){
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.token) state.auth = parsed;
+    }
+  }catch(e){}
+}
+
+/* ---------- API: akun & riwayat (Cloudflare Worker + D1) — tiap akun cuma bisa lihat/hapus riwayatnya sendiri ---------- */
+async function apiCall(path, options={}){
+  const headers = Object.assign({ 'Content-Type':'application/json' }, options.headers || {});
+  if (state.auth.token) headers['Authorization'] = 'Bearer ' + state.auth.token;
+  const res = await fetch(AI_PROXY_URL + path, { ...options, headers });
+  let data = null;
+  try{ data = await res.json(); }catch(e){}
+  if (!res.ok) throw new Error((data && data.error) || 'Gagal menghubungi server.');
+  return data;
+}
+async function apiRegister(email, password){ return apiCall('/auth/register', { method:'POST', body: JSON.stringify({email, password}) }); }
+async function apiLogin(email, password){ return apiCall('/auth/login', { method:'POST', body: JSON.stringify({email, password}) }); }
+async function apiListHistory(){ return apiCall('/history'); }
+async function apiAddHistory(formData, result){ return apiCall('/history', { method:'POST', body: JSON.stringify({formData, result}) }); }
+async function apiDeleteHistory(id){ return apiCall('/history/' + id, { method:'DELETE' }); }
+async function apiClearHistory(){ return apiCall('/history', { method:'DELETE' }); }
+
+async function refreshHistoryFromServer(){
+  try{
+    const data = await apiListHistory();
+    if (data && Array.isArray(data.items)) state.history = data.items;
+  }catch(e){ /* diam-diam gagal, riwayat lokal (kalau ada) tetap dipakai */ }
+}
+
+function logout(){
+  state.auth = { token:null, email:null };
+  state.history = [];
+  saveAuth();
+  state.view = 'login';
+  state.authMode = 'login';
+  state.authError = '';
+  render();
 }
 
 function totalSteps(){ return state.formData.mode === 'B' ? 5 : 4; }
@@ -521,12 +574,20 @@ function prevStep(){
 function submitForm(){
   const result = runEngine(state.formData);
   state.result = result;
-  state.history.unshift({ formData: {...state.formData}, result, ts: Date.now() });
+  const localEntry = { id:null, formData: {...state.formData}, result, ts: Date.now() };
+  state.history.unshift(localEntry);
   state.history = state.history.slice(0, isComplete() ? 20 : 10);
   state.view = 'result';
   saveState();
   render();
   tryEnhanceWithAI(state.formData, result);
+
+  // simpan ke akun (server) supaya riwayat ini milik akun yang sedang login, bukan cuma perangkat ini
+  if (state.auth.token){
+    apiAddHistory(localEntry.formData, result)
+      .then(data => { if (data && data.id) localEntry.id = data.id; })
+      .catch(() => { /* diam-diam gagal simpan ke server, hasil tetap tampil dari state lokal */ });
+  }
 }
 
 function resetForm(){
@@ -595,7 +656,8 @@ function tryEnhanceWithAI(formData, result){
 function render(){
   const app = document.getElementById('app');
   let content = '';
-  if (state.view === 'welcome') content = renderWelcome();
+  if (state.view === 'login') content = renderLogin();
+  else if (state.view === 'welcome') content = renderWelcome();
   else if (state.view === 'form') content = renderForm();
   else if (state.view === 'result') content = renderResult();
   else if (state.view === 'database') content = renderDatabase();
@@ -606,13 +668,48 @@ function render(){
 }
 
 function renderTopbar(){
+  const loggedIn = !!state.auth.token;
   return `<div class="topbar">
-    <button data-action="back-welcome" class="brand-lockup" aria-label="Kembali ke beranda">
+    <button data-action="${loggedIn ? 'back-welcome' : 'noop'}" class="brand-lockup" aria-label="Kembali ke beranda">
       <span class="brand-mark">B?</span>
       <span>Boleh Nggak, Bun?</span>
     </button>
-    <span class="plan-pill">● ${planLabel()}</span>
+    ${loggedIn ? `
+    <div class="flex items-center gap-2">
+      <span class="plan-pill">● ${planLabel()}</span>
+      <button data-action="logout" class="text-xs underline opacity-60" title="${esc(state.auth.email || '')}">Keluar</button>
+    </div>` : ''}
   </div>`;
+}
+
+function renderLogin(){
+  const isRegister = state.authMode === 'register';
+  return `
+  <section class="card hero-card p-7 md:p-9 mb-5">
+    <div class="relative">
+      <span class="eyebrow">Asisten keputusan MPASI Bunda</span>
+      <h1 class="font-display text-3xl md:text-4xl font-semibold mt-4 mb-3 leading-tight" style="color:var(--coral-dark)">
+        ${isRegister ? 'Buat akun dulu, Bun' : 'Masuk ke akun Bunda'}
+      </h1>
+      <p class="text-sm md:text-base opacity-75 leading-relaxed mb-6">
+        Riwayat cek setiap Bunda tersimpan terpisah dan aman di akun masing-masing —
+        bukan tercampur dengan Bunda lain. ${isRegister ? 'Daftar sebentar pakai email & password.' : 'Masuk pakai email & password yang sudah didaftarkan.'}
+      </p>
+
+      <label class="text-sm font-semibold mb-1 block">Email</label>
+      <input type="email" class="input-field mb-3" id="input-email" placeholder="nama@email.com" value="">
+      <label class="text-sm font-semibold mb-1 block">Password</label>
+      <input type="password" class="input-field" id="input-password" placeholder="minimal 6 karakter" value="">
+      ${state.authError ? `<p class="error-text mt-3">${esc(state.authError)}</p>` : ''}
+
+      <button data-action="auth-submit" class="btn-primary py-3 px-5 w-full mt-5" ${state.authBusy ? 'disabled' : ''}>
+        ${state.authBusy ? 'Memproses...' : (isRegister ? 'Daftar & Mulai' : 'Masuk')}
+      </button>
+      <button data-action="auth-toggle" class="text-sm underline opacity-70 mt-4 block mx-auto">
+        ${isRegister ? 'Sudah punya akun? Masuk di sini' : 'Belum punya akun? Daftar di sini'}
+      </button>
+    </div>
+  </section>`;
 }
 
 function renderWelcome(){
@@ -961,12 +1058,18 @@ function renderHistory(){
       </div>
       <span class="status-badge ${statusClass(entry.result.status)}" style="font-size:11px;padding:6px 10px">${entry.result.statusLabel}</span>
       <p class="text-xs opacity-65 mt-2">${esc(entry.formData.usia)} bulan · ${entry.formData.mode === 'B' ? 'Sudah diberikan' : 'Cek sebelum diberikan'}</p>
-      <button data-action="open-history" data-index="${index}" class="text-sm underline mt-3">Buka hasil</button>
+      <div class="flex gap-4 mt-3">
+        <button data-action="open-history" data-index="${index}" class="text-sm underline">Buka hasil</button>
+        ${entry.id != null ? `<button data-action="delete-history" data-id="${entry.id}" class="text-sm underline opacity-60" style="color:var(--coral-dark)">Hapus</button>` : ''}
+      </div>
     </article>`).join('');
   return `<div class="card p-6 md:p-8">
     <button data-action="back-welcome" class="text-sm underline opacity-70 mb-4">← Kembali</button>
-    <h2 class="font-display text-3xl font-semibold mb-2">Riwayat Keputusan</h2>
-    <p class="text-sm opacity-70 mb-5">Tersimpan hanya di perangkat ini. ${isComplete() ? 'Maksimal 20' : 'Maksimal 10'} hasil terbaru.</p>
+    <div class="flex items-start justify-between gap-3 mb-2">
+      <h2 class="font-display text-3xl font-semibold">Riwayat Keputusan</h2>
+      ${state.history.length ? `<button data-action="clear-history" class="text-xs underline opacity-60 whitespace-nowrap mt-2">Hapus Semua</button>` : ''}
+    </div>
+    <p class="text-sm opacity-70 mb-5">Riwayat ini khusus milik akun ${esc(state.auth.email || '')} — tidak tercampur dengan akun lain. ${isComplete() ? 'Maksimal 20' : 'Maksimal 10'} hasil terbaru.</p>
     <div class="grid gap-3">${entries || '<div class="premium-note">Belum ada hasil tersimpan. Mulai cek bahan pertama Bunda.</div>'}</div>
   </div>`;
 }
@@ -1001,7 +1104,8 @@ function attachHandlers(){
   app.querySelectorAll('[data-action]').forEach(el => {
     el.addEventListener('click', (e) => {
       const action = el.getAttribute('data-action');
-      if (action === 'start'){ startCheck(); }
+      if (action === 'noop'){ /* sengaja tidak melakukan apa-apa (mis. brand saat belum login) */ }
+      else if (action === 'start'){ startCheck(); }
       else if (action === 'start-mode'){ startCheck(el.getAttribute('data-value')); }
       else if (action === 'view-database'){ state.view='database'; render(); }
       else if (action === 'back-welcome'){ state.view='welcome'; render(); }
@@ -1028,8 +1132,56 @@ function attachHandlers(){
           render();
         }
       }
+      else if (action === 'delete-history'){ deleteHistoryEntry(el.getAttribute('data-id')); }
+      else if (action === 'clear-history'){ clearAllHistory(); }
+      else if (action === 'auth-toggle'){
+        state.authMode = state.authMode === 'login' ? 'register' : 'login';
+        state.authError = '';
+        render();
+      }
+      else if (action === 'auth-submit'){ submitAuth(); }
+      else if (action === 'logout'){ logout(); }
     });
   });
+}
+
+async function submitAuth(){
+  const email = (document.getElementById('input-email') || {}).value || '';
+  const password = (document.getElementById('input-password') || {}).value || '';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())){
+    state.authError = 'Isi email yang valid ya, Bun.'; render(); return;
+  }
+  if (password.length < 6){
+    state.authError = 'Password minimal 6 karakter ya, Bun.'; render(); return;
+  }
+  state.authBusy = true; state.authError = ''; render();
+  try{
+    const call = state.authMode === 'register' ? apiRegister : apiLogin;
+    const data = await call(email.trim().toLowerCase(), password);
+    state.auth = { token: data.token, email: data.email };
+    saveAuth();
+    state.authBusy = false;
+    await refreshHistoryFromServer();
+    state.view = 'welcome';
+    render();
+  }catch(e){
+    state.authBusy = false;
+    state.authError = String(e && e.message || e) || 'Gagal masuk. Coba lagi ya, Bun.';
+    render();
+  }
+}
+
+async function deleteHistoryEntry(id){
+  const idNum = Number(id);
+  state.history = state.history.filter(h => h.id !== idNum);
+  render();
+  try{ await apiDeleteHistory(idNum); }catch(e){ /* sudah dihapus di tampilan; sinkron ulang lain kali buka riwayat */ }
+}
+
+async function clearAllHistory(){
+  state.history = [];
+  render();
+  try{ await apiClearHistory(); }catch(e){ /* diam-diam gagal; sinkron ulang lain kali buka riwayat */ }
 }
 
 function syncInputs(){
@@ -1046,7 +1198,15 @@ function syncInputs(){
 }
 
 loadState();
-render();
+loadAuth();
+if (state.auth.token){
+  state.view = 'welcome';
+  render();
+  refreshHistoryFromServer().then(render);
+} else {
+  state.view = 'login';
+  render();
+}
 </script>
 </body>
 </html>
